@@ -1,28 +1,54 @@
 {
   "profile": {
     "name": "허광호",
-    "role": "| System Architect",
-    "bio": "대규모 분산 시스템 설계 및 클라우드 네이티브 인프라 구축 전문가",
+    "role": "| System Architect (TA/AA/SWA)",
+    "bio": "다양한 시스템 엔지니어링 프로젝트에서 탁월한 성과를 이끌어온 전문가",
     "email": "appledos@gmail.com",
     "github": "https://appledos.github.io/portfolio/"
   },
   "projects": [
     {
       "id": "proj-1",
-      "badge": "대표 프로젝트",
-      "period": "2025.03 - 2025.12",
-      "title": "분산 원장 기반 실시간 데이터 추적 및 자동화 플랫폼",
+      "badge": "AIOps/MLOps 프로젝트",
+      "period": "2025.09 - 2025.12",
+      "title": "고난이도 AX 연구지원 플랫폼 구축사업 (사업내용)",
       "imageUrl": "https://appledos.github.io/portfolio/image/axnexus_1.png",
-      "line1": "대용량 트래픽 환경에서 데이터 위·변조를 방지하고 파이프라인 전 과정을 자동화하는 백엔드 인프라 구축",
-      "line2": "전체 마이크로서비스 아키텍처(MSA) 설계 및 컨테이너 기반 CI/CD 배포 파이프라인 전담 리드",
-      "line3": "노드 간 통신 지연 병목을 비동기 이벤트 큐와 캐싱 전략으로 최적화하여 지연 시간 65% 단축",
-      "line4": "동시 요청 처리량(TPS) 3배 향상 및 무중단 배포 체계 확립으로 장애 복구 시간(MTTR) 80% 감소",
+      "line1": "고난이도 AX 연구지원 플랫폼 (MLops) 개발 및 구축",
+      "line2": "CAE 시험환경 예약 시스템 개발 및 DCV 스트리밍/SSH 웹터미널을 활용한 시험환경 접속기능",
+      "line3": "RAG기반 MLOps 통합 AI검색 기능 개발 (디노티시아 협업)",
+      "line4": " 공인시험기관 시험을 통한 시험환경 구성의 적절성 검증 및 정보시스템 감리 수행",
       "tech": [
-        "Kubernetes",
         "Docker",
         "FastAPI",
         "Redis",
-        "GitLab CI"
+        "Git",
+        "Postgresql",
+        "AWS",
+        "Vue",
+        "Java",
+        "Linux"
+      ]
+    },
+    {
+      "id": "proj-1788415333381",
+      "badge": "AIOps/MLOps 프로젝트",
+      "period": "2025.09 - 2025.12",
+      "title": "고난이도 AX 연구지원 플랫폼 구축사업 (개발내용)",
+      "imageUrl": "https://appledos.github.io/portfolio/image/axnexus_2.png",
+      "line1": "Nginx api proxy를 통해서 컨테이너 기반 AI 모델 구동 후 연계로 외부 연계에 대한 방법을 제공",
+      "line2": "CAE 시험환경에 접속하기 위해 DCV 프로토콜을 적용하여, HPC에 사용시 브라우저를 통해 데스크탑환경을 사용할 수 있도록 지원",
+      "line3": "Web 기반 SSH 터미널 기능을 통해 별도의 SSH 클라이언트 없이 시험환경에 접근할 수 있는 수단을 제공",
+      "line4": "디노티시아의 seahorse api 연계를 통해 모델, 데이터셋, 코드 git repository 에 대한 적재된 모델의 시멘틱 검색을 지원",
+      "tech": [
+        "Docker",
+        "FastAPI",
+        "Redis",
+        "Git",
+        "Postgresql",
+        "AWS",
+        "Vue",
+        "Java",
+        "Linux"
       ]
     }
   ]
