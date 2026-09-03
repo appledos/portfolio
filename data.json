@@ -1,10 +1,10 @@
 {
   "profile": {
-    "name": "홍길동",
+    "name": "허광호",
     "role": "| System Architect",
     "bio": "대규모 분산 시스템 설계 및 클라우드 네이티브 인프라 구축 전문가",
-    "email": "appledos@example.com",
-    "github": "https://github.com"
+    "email": "appledos@gmail.com",
+    "github": "https://appledos.github.io/portfolio/"
   },
   "projects": [
     {
@@ -12,7 +12,7 @@
       "badge": "대표 프로젝트",
       "period": "2025.03 - 2025.12",
       "title": "분산 원장 기반 실시간 데이터 추적 및 자동화 플랫폼",
-      "imageUrl": "https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture",
+      "imageUrl": "https://appledos.github.io/portfolio/image/axnexus_1.png",
       "line1": "대용량 트래픽 환경에서 데이터 위·변조를 방지하고 파이프라인 전 과정을 자동화하는 백엔드 인프라 구축",
       "line2": "전체 마이크로서비스 아키텍처(MSA) 설계 및 컨테이너 기반 CI/CD 배포 파이프라인 전담 리드",
       "line3": "노드 간 통신 지연 병목을 비동기 이벤트 큐와 캐싱 전략으로 최적화하여 지연 시간 65% 단축",
@@ -23,38 +23,6 @@
         "FastAPI",
         "Redis",
         "GitLab CI"
-      ]
-    },
-    {
-      "id": "proj-1788398777599",
-      "badge": "대표 프로젝트",
-      "period": "",
-      "title": "제목 없음",
-      "imageUrl": "https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture",
-      "line1": "",
-      "line2": "",
-      "line3": "",
-      "line4": "",
-      "tech": [
-        "Kubernetes",
-        "Docker",
-        "FastAPI"
-      ]
-    },
-    {
-      "id": "proj-1788398812323",
-      "badge": "대표 프로젝트",
-      "period": "",
-      "title": "제목 없음",
-      "imageUrl": "https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture",
-      "line1": "",
-      "line2": "",
-      "line3": "",
-      "line4": "",
-      "tech": [
-        "Kubernetes",
-        "Docker",
-        "FastAPI"
       ]
     }
   ]

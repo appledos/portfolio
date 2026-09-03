@@ -70,9 +70,9 @@
       </div>
     </header>
 
-    <!-- 3. 프로젝트 카드 리스트 (30초 스캔 레이아웃) -->
+    <!-- 3. 프로젝트 카드 리스트 (가로형 아키텍처 뷰 & 30초 스캔 레이아웃) -->
     <main id="projectList" class="space-y-8">
-      <!-- 렌더링 영역 -->
+      <!-- 동적 렌더링 -->
     </main>
 
   </div>
@@ -81,12 +81,22 @@
   <footer class="mt-16 text-center text-xs text-slate-400 py-6 border-t border-slate-200">
     <div class="flex items-center justify-center gap-2">
       <span>© 2026 Portfolio. All rights reserved.</span>
-      <!-- 관리자 로그인 버튼 (작고 은은하게 배치) -->
       <button onclick="promptAdminLogin()" class="text-slate-300 hover:text-slate-500 transition p-1" title="관리자 모드 전환 (Ctrl+Shift+A)">
         <i data-lucide="lock" class="w-3.5 h-3.5"></i>
       </button>
     </div>
   </footer>
+
+  <!-- [다이어그램 확대 모달 / Lightbox] -->
+  <div id="imageLightboxModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()">
+    <div class="relative max-w-6xl w-full max-h-[90vh] flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white hover:text-slate-300 transition">
+        <i data-lucide="x" class="w-7 h-7"></i>
+      </button>
+      <img id="lightboxImage" src="" alt="확대 다이어그램" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-white">
+      <p id="lightboxCaption" class="text-white text-xs mt-3 font-mono tracking-wide"></p>
+    </div>
+  </div>
 
   <!-- [모달 1] 프로필 수정 모달 -->
   <div id="profileModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
@@ -148,7 +158,7 @@
           <input type="text" id="inputTitle" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
         </div>
         <div>
-          <label class="block font-medium text-slate-700 mb-1">목표 시스템 다이어그램 이미지 URL</label>
+          <label class="block font-medium text-slate-700 mb-1">목표 시스템 다이어그램 이미지 URL (가로형 16:9 권장)</label>
           <input type="text" id="inputImageUrl" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500" placeholder="https://... 또는 ./images/diagram.png">
         </div>
 
@@ -185,7 +195,6 @@
   </div>
 
   <script>
-    // 관리자 비밀번호 (필요 시 수정 가능)
     const ADMIN_PIN = "1234";
 
     const fallbackData = {
@@ -202,7 +211,7 @@
           badge: "대표 프로젝트",
           period: "2025.03 - 2025.12",
           title: "분산 원장 기반 실시간 데이터 추적 및 자동화 플랫폼",
-          imageUrl: "https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture",
+          imageUrl: "https://placehold.co/1200x675/f8fafc/334155?text=Target+System+Architecture+(16:9+Wide)",
           line1: "대용량 트래픽 환경에서 데이터 위·변조를 방지하고 파이프라인 전 과정을 자동화하는 백엔드 인프라 구축",
           line2: "전체 마이크로서비스 아키텍처(MSA) 설계 및 컨테이너 기반 CI/CD 배포 파이프라인 전담 리드",
           line3: "노드 간 통신 지연 병목을 비동기 이벤트 큐와 캐싱 전략으로 최적화하여 지연 시간 65% 단축",
@@ -215,13 +224,11 @@
     let appData = null;
     let isAdmin = false;
 
-    // 관리자 모드 상태 판별 및 초기화
     function checkAdminState() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'true' || urlParams.get('admin') === '1') {
         isAdmin = true;
         sessionStorage.setItem('is_admin', 'true');
-        // 주소창에서 지저분한 ?admin 파라미터 정리
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (sessionStorage.getItem('is_admin') === 'true') {
         isAdmin = true;
@@ -230,7 +237,6 @@
       }
     }
 
-    // 관리자 모드 토글 함수
     function toggleAdminMode(enable) {
       isAdmin = enable;
       if (enable) {
@@ -241,7 +247,6 @@
       renderApp();
     }
 
-    // 핀번호 입력 로그인
     function promptAdminLogin() {
       if (isAdmin) {
         if (confirm("현재 관리자 모드입니다. 편집 모드를 종료하시겠습니까?")) {
@@ -257,7 +262,6 @@
       }
     }
 
-    // 단축키 (Ctrl + Shift + A 또는 Cmd + Shift + A) 지원
     window.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
@@ -265,7 +269,6 @@
       }
     });
 
-    // 1. 초기 데이터 로드
     async function initApp() {
       checkAdminState();
 
@@ -290,11 +293,10 @@
       renderApp();
     }
 
-    // 2. 화면 렌더링
+    // 화면 렌더링 (가로 16:9 다이어그램 비율 적용)
     function renderApp() {
       if (!appData) return;
 
-      // 관리자 툴바 표시 여부
       const adminToolbar = document.getElementById('adminToolbar');
       if (isAdmin) {
         adminToolbar.classList.remove('hidden');
@@ -302,7 +304,6 @@
         adminToolbar.classList.add('hidden');
       }
 
-      // 프로필 영역
       document.getElementById('profileName').innerText = appData.profile.name;
       document.getElementById('profileRole').innerText = appData.profile.role;
       document.getElementById('profileBio').innerText = appData.profile.bio;
@@ -314,7 +315,6 @@
       const githubBtn = document.getElementById('githubBtn');
       githubBtn.href = appData.profile.github;
 
-      // 프로젝트 리스트
       const listContainer = document.getElementById('projectList');
       listContainer.innerHTML = '';
 
@@ -332,7 +332,6 @@
       appData.projects.forEach((proj) => {
         const techBadges = proj.tech.map(t => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono font-medium">${t.trim()}</span>`).join('');
 
-        // 관리자 모드일 때만 편집/삭제 버튼 렌더링
         const adminControls = isAdmin ? `
           <div class="flex items-center gap-1.5 ml-4">
             <button onclick="openProjectModal('${proj.id}')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="수정">
@@ -359,15 +358,26 @@
             ${adminControls}
           </div>
 
-          <!-- Body -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-8">
+          <!-- Body: 좌측 가로형 16:9 다이어그램 & 우측 4줄 요약 -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-8 items-center">
+            
+            <!-- 1. 목표시스템 구성도 (가로 기준 16:9 Aspect Ratio) -->
             <div class="lg:col-span-5 flex flex-col justify-center">
-              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video lg:aspect-[4/3] flex items-center justify-center group relative">
-                <img src="${proj.imageUrl}" alt="${proj.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture'">
+              <div onclick="openLightbox('${proj.imageUrl}', '${proj.title}')" class="cursor-pointer group relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-slate-200 bg-slate-100/70 p-1.5 flex items-center justify-center transition hover:border-blue-400 shadow-inner">
+                <img src="${proj.imageUrl}" alt="${proj.title}" class="w-full h-full object-contain rounded-lg group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/1200x675/f8fafc/334155?text=Image+Not+Found'">
+                
+                <!-- 마우스 오버 시 확대 아이콘 힌트 -->
+                <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                  <span class="inline-flex items-center gap-1.5 bg-white/95 text-slate-800 text-xs px-3 py-1.5 rounded-full font-medium shadow-md">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 text-blue-600"></i>
+                    클릭 시 확대
+                  </span>
+                </div>
               </div>
-              <p class="text-xs text-center text-slate-400 mt-2 font-mono">▲ Target System Architecture</p>
+              <p class="text-xs text-center text-slate-400 mt-2 font-mono">▲ Target System Architecture (16:9)</p>
             </div>
 
+            <!-- 2. 핵심 요약 (4줄) -->
             <div class="lg:col-span-7 flex flex-col justify-between space-y-6">
               <div class="space-y-3">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">30초 핵심 요약</h3>
@@ -398,12 +408,25 @@
                 </div>
               </div>
             </div>
+
           </div>
         `;
         listContainer.appendChild(card);
       });
 
       lucide.createIcons();
+    }
+
+    // 라이트박스(확대 보기) 기능
+    function openLightbox(imgSrc, title) {
+      document.getElementById('lightboxImage').src = imgSrc;
+      document.getElementById('lightboxCaption').innerText = title + ' - 시스템 구성도';
+      document.getElementById('imageLightboxModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeLightbox() {
+      document.getElementById('imageLightboxModal').classList.add('hidden');
     }
 
     // JSON 다운로드
@@ -416,7 +439,7 @@
       downloadAnchor.click();
       downloadAnchor.remove();
 
-      alert("data.json 다운로드 완료!\n저장소의 data.json 파일을 교체하고 Git Commit & Push하면 전 세계 방문자에게 배포됩니다.");
+      alert("data.json 다운로드 완료!\n저장소의 data.json 파일을 교체하고 Git Push하면 전 세계 방문자에게 배포됩니다.");
     }
 
     // JSON 업로드
@@ -441,7 +464,7 @@
       reader.readAsText(file);
     }
 
-    // 모달 함수들
+    // 모달 제어
     function openProfileModal() {
       document.getElementById('inputName').value = appData.profile.name;
       document.getElementById('inputRole').value = appData.profile.role;
@@ -470,7 +493,7 @@
         document.getElementById('inputBadge').value = '대표 프로젝트';
         document.getElementById('inputPeriod').value = '';
         document.getElementById('inputTitle').value = '';
-        document.getElementById('inputImageUrl').value = 'https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture';
+        document.getElementById('inputImageUrl').value = 'https://placehold.co/1200x675/f8fafc/334155?text=Target+System+Architecture+(16:9+Wide)';
         document.getElementById('inputLine1').value = '';
         document.getElementById('inputLine2').value = '';
         document.getElementById('inputLine3').value = '';
