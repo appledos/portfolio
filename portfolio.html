@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio | System Architecture</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased py-10 px-4 md:px-8 min-h-screen flex flex-col justify-between">
+
+  <div class="max-w-5xl mx-auto w-full space-y-8">
+
+    <!-- 1. [관리자 전용 툴바] (일반 방문자에게는 숨김) -->
+    <aside id="adminToolbar" class="hidden bg-slate-900 text-white px-5 py-3 rounded-xl border border-slate-700 shadow-lg flex flex-wrap items-center justify-between gap-3 transition-all animate-fade-in">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+        <span class="text-xs font-semibold tracking-wide text-slate-200">⚡ 관리자 편집 모드 활성화됨</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <button onclick="openProfileModal()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 border border-slate-600 rounded-md hover:bg-slate-700 transition">
+          <i data-lucide="user-cog" class="w-3.5 h-3.5 text-blue-400"></i>
+          프로필 편집
+        </button>
+        <button onclick="openProjectModal()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 border border-slate-600 rounded-md hover:bg-slate-700 transition">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-green-400"></i>
+          프로젝트 추가
+        </button>
+        <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="handleFileUpload(event)">
+        <button onclick="document.getElementById('jsonFileInput').click()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 border border-slate-600 rounded-md hover:bg-slate-700 transition">
+          <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-400"></i>
+          JSON 불러오기
+        </button>
+        <button onclick="downloadJsonFile()" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white font-semibold rounded-md hover:bg-emerald-500 transition shadow-sm">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          data.json 다운로드
+        </button>
+        <button onclick="toggleAdminMode(false)" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-900/60 text-rose-200 border border-rose-700/50 rounded-md hover:bg-rose-800 transition ml-2">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          편집 모드 종료
+        </button>
+      </div>
+    </aside>
+
+    <!-- 2. 프로필 헤더 영역 (방문자 공통) -->
+    <header class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 id="profileName" class="text-3xl font-extrabold text-slate-900 tracking-tight">홍길동</h1>
+            <span id="profileRole" class="text-lg font-medium text-blue-600">| System Architect</span>
+          </div>
+          <p id="profileBio" class="text-sm text-slate-600 mt-2">대규모 분산 시스템 설계 및 클라우드 네이티브 인프라 구축 전문가</p>
+        </div>
+
+        <!-- 연락처 링크 -->
+        <div class="flex items-center gap-2.5">
+          <a id="emailBtn" href="mailto:architect@example.com" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition shadow-sm">
+            <i data-lucide="mail" class="w-4 h-4"></i>
+            <span id="emailText">Email</span>
+          </a>
+          <a id="githubBtn" href="https://github.com" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-100 transition shadow-sm">
+            <i data-lucide="github" class="w-4 h-4"></i>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3. 프로젝트 카드 리스트 (30초 스캔 레이아웃) -->
+    <main id="projectList" class="space-y-8">
+      <!-- 렌더링 영역 -->
+    </main>
+
+  </div>
+
+  <!-- 4. 푸터 & 관리자 로그인 트리거 -->
+  <footer class="mt-16 text-center text-xs text-slate-400 py-6 border-t border-slate-200">
+    <div class="flex items-center justify-center gap-2">
+      <span>© 2026 Portfolio. All rights reserved.</span>
+      <!-- 관리자 로그인 버튼 (작고 은은하게 배치) -->
+      <button onclick="promptAdminLogin()" class="text-slate-300 hover:text-slate-500 transition p-1" title="관리자 모드 전환 (Ctrl+Shift+A)">
+        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+  </footer>
+
+  <!-- [모달 1] 프로필 수정 모달 -->
+  <div id="profileModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-900">프로필 및 링크 편집</h3>
+        <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">이름</label>
+          <input type="text" id="inputName" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">전문 분야 / 직함</label>
+          <input type="text" id="inputRole" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">한 줄 소개</label>
+          <input type="text" id="inputBio" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Email 주소</label>
+          <input type="email" id="inputEmail" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">GitHub URL</label>
+          <input type="url" id="inputGithub" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-3 border-t">
+        <button onclick="closeModal('profileModal')" class="px-4 py-2 border rounded-lg text-sm hover:bg-slate-100">취소</button>
+        <button onclick="saveProfile()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">임시 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- [모달 2] 프로젝트 추가/수정 모달 -->
+  <div id="projectModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-xl my-8">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="projectModalTitle" class="text-lg font-bold text-slate-900">프로젝트 편집</h3>
+        <button onclick="closeModal('projectModal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="editingProjectId">
+      <div class="space-y-3 text-sm max-h-[70vh] overflow-y-auto pr-1">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">뱃지 태그</label>
+            <input type="text" id="inputBadge" class="w-full border rounded-lg p-2 outline-none focus:border-blue-500" placeholder="대표 프로젝트">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">진행 기간</label>
+            <input type="text" id="inputPeriod" class="w-full border rounded-lg p-2 outline-none focus:border-blue-500" placeholder="2025.03 - 2025.12">
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">프로젝트 제목</label>
+          <input type="text" id="inputTitle" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">목표 시스템 다이어그램 이미지 URL</label>
+          <input type="text" id="inputImageUrl" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500" placeholder="https://... 또는 ./images/diagram.png">
+        </div>
+
+        <div class="space-y-2 pt-2 border-t">
+          <label class="block font-bold text-slate-800">핵심 요약 (30초 파악용 4줄)</label>
+          <div>
+            <span class="text-xs font-semibold text-blue-600">1. 개요 및 목적</span>
+            <input type="text" id="inputLine1" class="w-full border rounded-lg p-2 mt-0.5 outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-blue-600">2. 설계 및 역할</span>
+            <input type="text" id="inputLine2" class="w-full border rounded-lg p-2 mt-0.5 outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-blue-600">3. 기술적 도전 해결</span>
+            <input type="text" id="inputLine3" class="w-full border rounded-lg p-2 mt-0.5 outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-blue-600">4. 성과 및 지표</span>
+            <input type="text" id="inputLine4" class="w-full border rounded-lg p-2 mt-0.5 outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="pt-2 border-t">
+          <label class="block font-medium text-slate-700 mb-1">적용 기술 스택 (쉼표 구분)</label>
+          <input type="text" id="inputTech" class="w-full border rounded-lg p-2.5 outline-none focus:border-blue-500" placeholder="Kubernetes, Docker, FastAPI, Redis">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-3 border-t">
+        <button onclick="closeModal('projectModal')" class="px-4 py-2 border rounded-lg text-sm hover:bg-slate-100">취소</button>
+        <button onclick="saveProject()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">임시 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 관리자 비밀번호 (필요 시 수정 가능)
+    const ADMIN_PIN = "1234";
+
+    const fallbackData = {
+      profile: {
+        name: "홍길동",
+        role: "| System Architect",
+        bio: "대규모 분산 시스템 설계 및 클라우드 네이티브 인프라 구축 전문가",
+        email: "architect@example.com",
+        github: "https://github.com"
+      },
+      projects: [
+        {
+          id: "proj-1",
+          badge: "대표 프로젝트",
+          period: "2025.03 - 2025.12",
+          title: "분산 원장 기반 실시간 데이터 추적 및 자동화 플랫폼",
+          imageUrl: "https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture",
+          line1: "대용량 트래픽 환경에서 데이터 위·변조를 방지하고 파이프라인 전 과정을 자동화하는 백엔드 인프라 구축",
+          line2: "전체 마이크로서비스 아키텍처(MSA) 설계 및 컨테이너 기반 CI/CD 배포 파이프라인 전담 리드",
+          line3: "노드 간 통신 지연 병목을 비동기 이벤트 큐와 캐싱 전략으로 최적화하여 지연 시간 65% 단축",
+          line4: "동시 요청 처리량(TPS) 3배 향상 및 무중단 배포 체계 확립으로 장애 복구 시간(MTTR) 80% 감소",
+          tech: ["Kubernetes", "Docker", "FastAPI", "Redis", "GitLab CI"]
+        }
+      ]
+    };
+
+    let appData = null;
+    let isAdmin = false;
+
+    // 관리자 모드 상태 판별 및 초기화
+    function checkAdminState() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('admin') === 'true' || urlParams.get('admin') === '1') {
+        isAdmin = true;
+        sessionStorage.setItem('is_admin', 'true');
+        // 주소창에서 지저분한 ?admin 파라미터 정리
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (sessionStorage.getItem('is_admin') === 'true') {
+        isAdmin = true;
+      } else {
+        isAdmin = false;
+      }
+    }
+
+    // 관리자 모드 토글 함수
+    function toggleAdminMode(enable) {
+      isAdmin = enable;
+      if (enable) {
+        sessionStorage.setItem('is_admin', 'true');
+      } else {
+        sessionStorage.removeItem('is_admin');
+      }
+      renderApp();
+    }
+
+    // 핀번호 입력 로그인
+    function promptAdminLogin() {
+      if (isAdmin) {
+        if (confirm("현재 관리자 모드입니다. 편집 모드를 종료하시겠습니까?")) {
+          toggleAdminMode(false);
+        }
+        return;
+      }
+      const pin = prompt("관리자 PIN 번호를 입력하세요 (기본값: 1234):");
+      if (pin === ADMIN_PIN) {
+        toggleAdminMode(true);
+      } else if (pin !== null) {
+        alert("PIN 번호가 일치하지 않습니다.");
+      }
+    }
+
+    // 단축키 (Ctrl + Shift + A 또는 Cmd + Shift + A) 지원
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        promptAdminLogin();
+      }
+    });
+
+    // 1. 초기 데이터 로드
+    async function initApp() {
+      checkAdminState();
+
+      const localDraft = localStorage.getItem('portfolio_draft_data');
+      if (localDraft) {
+        try { appData = JSON.parse(localDraft); } catch (e) {}
+      }
+
+      if (!appData) {
+        try {
+          const response = await fetch('./data.json', { cache: 'no-cache' });
+          if (response.ok) {
+            appData = await response.json();
+          } else {
+            throw new Error('data.json load failed');
+          }
+        } catch (err) {
+          appData = fallbackData;
+        }
+      }
+
+      renderApp();
+    }
+
+    // 2. 화면 렌더링
+    function renderApp() {
+      if (!appData) return;
+
+      // 관리자 툴바 표시 여부
+      const adminToolbar = document.getElementById('adminToolbar');
+      if (isAdmin) {
+        adminToolbar.classList.remove('hidden');
+      } else {
+        adminToolbar.classList.add('hidden');
+      }
+
+      // 프로필 영역
+      document.getElementById('profileName').innerText = appData.profile.name;
+      document.getElementById('profileRole').innerText = appData.profile.role;
+      document.getElementById('profileBio').innerText = appData.profile.bio;
+      
+      const emailBtn = document.getElementById('emailBtn');
+      emailBtn.href = `mailto:${appData.profile.email}`;
+      document.getElementById('emailText').innerText = appData.profile.email ? 'Email' : 'Email';
+
+      const githubBtn = document.getElementById('githubBtn');
+      githubBtn.href = appData.profile.github;
+
+      // 프로젝트 리스트
+      const listContainer = document.getElementById('projectList');
+      listContainer.innerHTML = '';
+
+      if (appData.projects.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
+            <p class="text-slate-500 mb-3">등록된 프로젝트가 없습니다.</p>
+            ${isAdmin ? `<button onclick="openProjectModal()" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">프로젝트 추가하기</button>` : ''}
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      appData.projects.forEach((proj) => {
+        const techBadges = proj.tech.map(t => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono font-medium">${t.trim()}</span>`).join('');
+
+        // 관리자 모드일 때만 편집/삭제 버튼 렌더링
+        const adminControls = isAdmin ? `
+          <div class="flex items-center gap-1.5 ml-4">
+            <button onclick="openProjectModal('${proj.id}')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="수정">
+              <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </button>
+            <button onclick="deleteProject('${proj.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="삭제">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        ` : '';
+
+        const card = document.createElement('section');
+        card.className = "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition hover:shadow-md";
+        card.innerHTML = `
+          <!-- Header -->
+          <div class="p-6 md:px-8 md:pt-6 md:pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-start">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">${proj.badge}</span>
+                <span class="text-xs text-slate-400 font-mono">${proj.period}</span>
+              </div>
+              <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">${proj.title}</h2>
+            </div>
+            ${adminControls}
+          </div>
+
+          <!-- Body -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-8">
+            <div class="lg:col-span-5 flex flex-col justify-center">
+              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video lg:aspect-[4/3] flex items-center justify-center group relative">
+                <img src="${proj.imageUrl}" alt="${proj.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture'">
+              </div>
+              <p class="text-xs text-center text-slate-400 mt-2 font-mono">▲ Target System Architecture</p>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col justify-between space-y-6">
+              <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">30초 핵심 요약</h3>
+                <ul class="space-y-2.5 text-slate-700 text-sm md:text-base leading-relaxed">
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-600 font-bold">1.</span>
+                    <span><strong>개요 및 목적:</strong> ${proj.line1}</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-600 font-bold">2.</span>
+                    <span><strong>설계 및 역할:</strong> ${proj.line2}</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-600 font-bold">3.</span>
+                    <span><strong>도전 및 해결:</strong> ${proj.line3}</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-600 font-bold">4.</span>
+                    <span><strong>성과 및 지표:</strong> ${proj.line4}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">적용 기술</h4>
+                <div class="flex flex-wrap gap-1.5">
+                  ${techBadges}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // JSON 다운로드
+    function downloadJsonFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "data.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      alert("data.json 다운로드 완료!\n저장소의 data.json 파일을 교체하고 Git Commit & Push하면 전 세계 방문자에게 배포됩니다.");
+    }
+
+    // JSON 업로드
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.profile && imported.projects) {
+            appData = imported;
+            localStorage.setItem('portfolio_draft_data', JSON.stringify(appData));
+            renderApp();
+            alert("data.json을 성공적으로 불러왔습니다!");
+          }
+        } catch (err) {
+          alert("JSON 파싱 에러");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 모달 함수들
+    function openProfileModal() {
+      document.getElementById('inputName').value = appData.profile.name;
+      document.getElementById('inputRole').value = appData.profile.role;
+      document.getElementById('inputBio').value = appData.profile.bio;
+      document.getElementById('inputEmail').value = appData.profile.email;
+      document.getElementById('inputGithub').value = appData.profile.github;
+      document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function openProjectModal(editId = null) {
+      document.getElementById('editingProjectId').value = editId || '';
+      document.getElementById('projectModalTitle').innerText = editId ? '프로젝트 수정' : '새 프로젝트 추가';
+
+      if (editId) {
+        const proj = appData.projects.find(p => p.id === editId);
+        document.getElementById('inputBadge').value = proj.badge;
+        document.getElementById('inputPeriod').value = proj.period;
+        document.getElementById('inputTitle').value = proj.title;
+        document.getElementById('inputImageUrl').value = proj.imageUrl;
+        document.getElementById('inputLine1').value = proj.line1;
+        document.getElementById('inputLine2').value = proj.line2;
+        document.getElementById('inputLine3').value = proj.line3;
+        document.getElementById('inputLine4').value = proj.line4;
+        document.getElementById('inputTech').value = proj.tech.join(', ');
+      } else {
+        document.getElementById('inputBadge').value = '대표 프로젝트';
+        document.getElementById('inputPeriod').value = '';
+        document.getElementById('inputTitle').value = '';
+        document.getElementById('inputImageUrl').value = 'https://placehold.co/800x600/e2e8f0/475569?text=Target+System+Architecture';
+        document.getElementById('inputLine1').value = '';
+        document.getElementById('inputLine2').value = '';
+        document.getElementById('inputLine3').value = '';
+        document.getElementById('inputLine4').value = '';
+        document.getElementById('inputTech').value = 'Kubernetes, Docker, FastAPI';
+      }
+      document.getElementById('projectModal').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function saveProfile() {
+      appData.profile = {
+        name: document.getElementById('inputName').value,
+        role: document.getElementById('inputRole').value,
+        bio: document.getElementById('inputBio').value,
+        email: document.getElementById('inputEmail').value,
+        github: document.getElementById('inputGithub').value
+      };
+      localStorage.setItem('portfolio_draft_data', JSON.stringify(appData));
+      closeModal('profileModal');
+      renderApp();
+    }
+
+    function saveProject() {
+      const editId = document.getElementById('editingProjectId').value;
+      const techArr = document.getElementById('inputTech').value.split(',').map(s => s.trim()).filter(Boolean);
+
+      const projectPayload = {
+        id: editId || 'proj-' + Date.now(),
+        badge: document.getElementById('inputBadge').value || '프로젝트',
+        period: document.getElementById('inputPeriod').value,
+        title: document.getElementById('inputTitle').value || '제목 없음',
+        imageUrl: document.getElementById('inputImageUrl').value,
+        line1: document.getElementById('inputLine1').value,
+        line2: document.getElementById('inputLine2').value,
+        line3: document.getElementById('inputLine3').value,
+        line4: document.getElementById('inputLine4').value,
+        tech: techArr
+      };
+
+      if (editId) {
+        const idx = appData.projects.findIndex(p => p.id === editId);
+        if (idx !== -1) appData.projects[idx] = projectPayload;
+      } else {
+        appData.projects.push(projectPayload);
+      }
+
+      localStorage.setItem('portfolio_draft_data', JSON.stringify(appData));
+      closeModal('projectModal');
+      renderApp();
+    }
+
+    function deleteProject(id) {
+      if (confirm('이 프로젝트 카드를 삭제하시겠습니까?')) {
+        appData.projects = appData.projects.filter(p => p.id !== id);
+        localStorage.setItem('portfolio_draft_data', JSON.stringify(appData));
+        renderApp();
+      }
+    }
+
+    // 앱 실행
+    initApp();
+  </script>
+</body>
+</html>
