@@ -89,6 +89,25 @@
         "Java",
         "Postgresql"
       ]
+    },
+    {
+      "id": "proj-1788824495857",
+      "badge": "디지털배지 (대구시)",
+      "period": "2025.05 - 2025.11",
+      "title": "블록체인 기반 대구시민 맞춤형 행정서비스 플랫폼 개발",
+      "imageUrl": "https://appledos.github.io/portfolio/image/rootlab_1.png",
+      "line1": "블록체인 기반 자동화된 자격 검증과 디지털 신원 인증을 통한 원스톱 행정서비스 구축",
+      "line2": "1edtech openbadge 규격을 준수하는 디지털배지 솔루션 구축 및 연계",
+      "line3": "블록체인/DID 기반의 신원인증 및 지원자격 검증을 통한 자격증명  디지털배지 발행",
+      "line4": "디지털 신원 인증과의 연계를 통한 인증->신청->발급 과정의 편의성 극대화",
+      "tech": [
+        "Open badge",
+        "Java",
+        "Oracle",
+        "Restful API",
+        "Blockchain",
+        "DID"
+      ]
     }
   ]
 }
